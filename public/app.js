@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-app.js";
 import { getAuth, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, query, where, getDocs, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, query, where, getDocs, orderBy, serverTimestamp, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-firestore.js";
 import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
 
 // 🔥 제미나이(눈 담당 AI) 연동을 위한 키 설정
@@ -51,32 +51,61 @@ let currentUser = null;
 let uploadedMimeType = "image/jpeg";
 let uploadedBase64 = null;
 
-// --- 안티그래비티 기반(NotebookLM) AI 코칭 로직 (비만 치료 및 식단 관리 가이드) ---
+// 🔥 Phase 1: 유저 생체/목표 정보 (나만의 전담 영양사를 위한 데이터 볼륨)
+let userProfileData = null;
+
+// 프로필 폼 관련 DOM 요소
+const profGender = document.getElementById('prof-gender');
+const profAge = document.getElementById('prof-age');
+const profHeight = document.getElementById('prof-height');
+const profWeight = document.getElementById('prof-weight');
+const profTargetWeight = document.getElementById('prof-target-weight');
+const profGoal = document.getElementById('prof-goal');
+const saveProfileBtn = document.getElementById('save-profile-btn');
+const profileMsg = document.getElementById('profile-msg');
+
+// --- 안티그래비티 기반(NotebookLM) AI 코칭 로직 (초개인화 프로필 기반) ---
 function generateCoachingMessage(data) {
     const totalMacros = data.protein + data.carbs + data.fat;
     const proteinRatio = data.protein / totalMacros;
     const carbsRatio = data.carbs / totalMacros;
 
-    // NotebookLM 요약 원칙에 따른 조건부 피드백 생성
-    const messages = [
-        "오늘도 기록하셨네요! 매일 식단을 기록하는 사람은 감량 효과가 2배 더 높답니다. 조급해하지 말고 6개월 간 5% 감량을 목표로 해보세요!"
-    ];
+    const messages = [];
+
+    // 유저 프로필이 있을 경우 맞춤형 멘트 생성
+    if (userProfileData && userProfileData.targetWeight) {
+        messages.push(`현재 목표 체중(${userProfileData.targetWeight}kg)까지 다가가고 있습니다! 매일 기록하는 습관이 ${userProfileData.goal === 'gain' ? '근육' : '감량'}의 핵심입니다.`);
+    } else {
+        messages.push("오늘도 기록하셨네요! 매일 식단을 기록하는 사람은 다이어트 성공률이 2배 더 높답니다!");
+    }
 
     if (data.calories > 800) {
-        messages.push("같은 100kcal라도 채소와 통곡물은 부피가 훨씬 큽니다. 칼로리가 높다면 수분과 식이섬유가 많은 식품으로 대체해 포만감을 높여보세요.");
+        if (userProfileData && userProfileData.goal === 'gain') {
+            messages.push("충분한 열량을 섭취했습니다. 벌크업을 위해 웨이트 트레이닝 강도를 높이기에 좋은 타이밍입니다!");
+        } else {
+            messages.push("칼로리가 꽤 높습니다. 포만감이 필요하시다면 수분과 식이섬유가 많은 채소 위주로 대체해 보세요.");
+        }
     }
 
     if (proteinRatio < 0.25) {
-        messages.push("단백질 섭취량이 부족해요! 단백질은 식탐을 줄여주고 다이어트 중 근육을 지켜줍니다. 닭가슴살뿐만 아니라 렌틸콩, 두부 같은 식물성 단백질도 함께 드시면 금상첨화입니다.");
+        messages.push("단백질 섭취량이 부족해요! 근손실을 막고 요요를 피하려면 닭가슴살, 두부 등을 지금보다 더 챙겨 드셔야 합니다.");
     } else {
-        messages.push("훌륭한 단백질 섭취입니다! 충분한 단백질은 포만감을 늘려 자발적인 식사량 감소로 이어집니다.");
+        if (userProfileData && userProfileData.goal === 'gain') {
+            messages.push(`훌륭한 단백질(${Math.round(proteinRatio * 100)}%) 섭취입니다! 근육 합성에 최적의 재료가 들어왔습니다.`);
+        } else {
+            messages.push("단백질 비율이 아주 좋습니다! 질 좋은 단백질은 식탐을 줄여주고 다이어트 중 기초대사량을 지켜줍니다.");
+        }
     }
 
     if (carbsRatio > 0.5) {
-        messages.push("탄수화물 비율이 다소 높습니다. 흰 빵이나 쌀밥 대신 소화가 천천히 되는 현미, 귀리로 바꾸면 인슐린 분비가 줄어 살이 덜 찝니다.");
+        if (userProfileData && userProfileData.goal === 'loss') {
+            messages.push("탄수화물 비율이 높습니다. 감량이 목표이시니 흰 쌀밥 대신 오트밀이나 귀리로 바꿔보는 건 어떨까요? 인슐린 폭발을 막아야 살이 빠집니다.");
+        } else {
+            messages.push("탄수화물이 많습니다. 소화가 느린 복합 탄수화물을 통해 혈당 스파이크를 방지하세요.");
+        }
     }
 
-    messages.push("식사하실 때는 채소(식이섬유) -> 단백질 -> 탄수화물 순서(거꾸로 식사법)로 드시면 지방 축적 억제에 아주 유리합니다.");
+    messages.push("거꾸로 식사법(채소 -> 단백질 -> 탄수화물)을 지키면 혈당이 천천히 올라 살이 덜 찌 체질로 바뀝니다.");
 
     // 랜덤으로 1~2개의 핵심 조언만 노출
     const shuffled = messages.sort(() => 0.5 - Math.random());
@@ -110,15 +139,19 @@ tabBtns.forEach(btn => {
 });
 
 // --- 2. 인증 관리 (익명 로그인 데모) ---
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUser = user;
         loginBtn.classList.add('hidden');
         userProfile.classList.remove('hidden');
         userNameDisplay.textContent = "회원님"; // 실제 앱에선 구글 로그인 등으로 이름 가져옴
         console.log("Logged in with uid:", user.uid);
+
+        // 로그인 성공 시 유저 프로필 데이터 불러오기
+        await loadUserProfile();
     } else {
         currentUser = null;
+        userProfileData = null;
         loginBtn.classList.remove('hidden');
         userProfile.classList.add('hidden');
     }
@@ -176,7 +209,13 @@ analyzeBtn.addEventListener('click', async () => {
 
     try {
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-        const prompt = `이 음식 사진을 분석해줘. 사진에 있는 주요 음식들을 모두 인식하고, 그 음식들의 1인분 총합 기준으로 대략적인 섭취 칼로리(kcal), 단백질(g), 탄수화물(g), 지방(g)을 추정해줘. 음식이름은 한국어로 써줘. 
+
+        let personaContext = "";
+        if (userProfileData && userProfileData.weight && userProfileData.targetWeight) {
+            personaContext = `너는 내 전담 다이어트 영양사야. 내 현재 상태는 ${userProfileData.gender === 'male' ? '남성' : '여성'}, 나이는 ${userProfileData.age}세, 키 ${userProfileData.height}cm, 현재 체중은 ${userProfileData.weight}kg이고 목표 체중은 ${userProfileData.targetWeight}kg 이야. 나의 목표는 '${userProfileData.goal === 'loss' ? '체중 감량' : userProfileData.goal === 'gain' ? '근육 증량' : '체중 유지'}'이야. 이 사실을 반드시 명심하고 식단을 평가해줘. `;
+        }
+
+        const prompt = `${personaContext}이 음식 사진을 분석해줘. 사진에 있는 주요 음식들을 모두 인식하고, 그 음식들의 1인분 총합 기준으로 대략적인 섭취 칼로리(kcal), 단백질(g), 탄수화물(g), 지방(g)을 추정해줘. 음식이름은 한국어로 써줘. 
 추가로, 사진 속에서 각 식단 항목이 실제로 놓여 있는 대략적인 중심점 좌표(y, x)를 0~100 사이의 퍼센트(%) 값으로 예측해줘. (맨 위쪽 끝이 y=0, 맨 왼쪽 끝이 x=0 이야)
 반드시 아래 JSON 형식으로만 대답하고 마크다운 문법(\`\`\`)은 쓰지마.
 {
@@ -376,4 +415,63 @@ async function loadMonthlyHistory() {
         console.error("Error loading history:", error);
         mealHistoryList.innerHTML = '<p class="empty-state" style="color:red;">데이터를 불러오는 중 에러가 발생했습니다. (DB 권한 확인 필요)</p>';
     }
+}
+
+// 🔥 Phase 1 : 유저 프로필 저장 및 불러오기 로직
+async function loadUserProfile() {
+    if (!currentUser) return;
+    try {
+        const docRef = doc(db, "userProfiles", currentUser.uid);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+            userProfileData = docSnap.data();
+            // DB에 저장된 값을 UI 폼에 셋팅
+            if (userProfileData.gender) profGender.value = userProfileData.gender;
+            if (userProfileData.age) profAge.value = userProfileData.age;
+            if (userProfileData.height) profHeight.value = userProfileData.height;
+            if (userProfileData.weight) profWeight.value = userProfileData.weight;
+            if (userProfileData.targetWeight) profTargetWeight.value = userProfileData.targetWeight;
+            if (userProfileData.goal) profGoal.value = userProfileData.goal;
+            console.log("프로필 로드 완료:", userProfileData);
+        }
+    } catch (err) {
+        console.error("프로필 로드 에러:", err);
+    }
+}
+
+if (saveProfileBtn) {
+    saveProfileBtn.addEventListener('click', async () => {
+        if (!currentUser) {
+            alert("로그인 후에 프로필 저장이 가능합니다.");
+            return;
+        }
+
+        saveProfileBtn.disabled = true;
+        saveProfileBtn.textContent = "저장 중...";
+        profileMsg.textContent = "";
+
+        const newData = {
+            gender: profGender.value,
+            age: parseInt(profAge.value) || 0,
+            height: parseInt(profHeight.value) || 0,
+            weight: parseInt(profWeight.value) || 0,
+            targetWeight: parseInt(profTargetWeight.value) || 0,
+            goal: profGoal.value,
+            updatedAt: serverTimestamp()
+        };
+
+        try {
+            await setDoc(doc(db, "userProfiles", currentUser.uid), newData, { merge: true });
+            userProfileData = newData; // 전역 변수 동기화
+            profileMsg.textContent = "✨ 프로필이 성공적으로 저장되었습니다! AI가 이 정보를 바탕으로 코칭합니다.";
+            setTimeout(() => { profileMsg.textContent = ""; }, 3000);
+        } catch (err) {
+            console.error(err);
+            alert("저장 실패: " + err.message);
+        } finally {
+            saveProfileBtn.disabled = false;
+            saveProfileBtn.textContent = "정보 저장하기";
+        }
+    });
 }

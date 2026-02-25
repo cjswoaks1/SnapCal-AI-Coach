@@ -9,9 +9,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" as="style" crossorigin
     href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/variable/pretendardvariable.css" />
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=2">
   <!-- Custom JS (Cache busting) -->
-  <script type="module" src="app.js?v=5"></script>
+  <script type="module" src="app.js?v=6"></script>
 </head>
 
 <body>
@@ -32,6 +32,7 @@
     <nav class="tabs">
       <button class="tab-btn active" data-target="scanner-view">AI 스캐너</button>
       <button class="tab-btn" data-target="history-view">식단 기록 (월간)</button>
+      <button class="tab-btn" data-target="profile-view">내 프로필</button>
     </nav>
 
     <main>
@@ -139,6 +140,55 @@
             <!-- JS로 데이터 삽입됨 -->
             <p class="empty-state">아직 기록된 식단이 없습니다. 스캐너에서 사진을 찍어 기록을 남겨보세요!</p>
           </ul>
+        </div>
+      </section>
+      <!-- 3. 초개인화 프로필 뷰 (Phase 1) -->
+      <section id="profile-view" class="view-section hidden">
+        <div class="history-header">
+          <h2>나만의 전담 영양사</h2>
+          <p>정확한 신체 정보를 알려주시면 더 날카로운 코칭을 제공합니다.</p>
+        </div>
+
+        <div class="profile-form glass-card">
+          <div class="form-group">
+            <label for="prof-gender">성별</label>
+            <select id="prof-gender">
+              <option value="male">남성</option>
+              <option value="female">여성</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="prof-age">나이</label>
+            <input type="number" id="prof-age" placeholder="예: 30" min="10" max="100">
+            <span class="unit-span">세</span>
+          </div>
+          <div class="form-group">
+            <label for="prof-height">키</label>
+            <input type="number" id="prof-height" placeholder="예: 175" min="100" max="250">
+            <span class="unit-span">cm</span>
+          </div>
+          <div class="form-group">
+            <label for="prof-weight">현재 체중</label>
+            <input type="number" id="prof-weight" placeholder="예: 70" min="30" max="250">
+            <span class="unit-span">kg</span>
+          </div>
+          <div class="form-group">
+            <label for="prof-target-weight">목표 체중</label>
+            <input type="number" id="prof-target-weight" placeholder="예: 65" min="30" max="250">
+            <span class="unit-span">kg</span>
+          </div>
+          <div class="form-group">
+            <label for="prof-goal">다이어트 목표</label>
+            <select id="prof-goal">
+              <option value="loss">체중 감량 (다이어트)</option>
+              <option value="maintenance">체중 유지</option>
+              <option value="gain">근육 증량 (벌크업)</option>
+            </select>
+          </div>
+
+          <button id="save-profile-btn" class="primary-btn" style="width: 100%; margin-top: 15px;">정보 저장하기</button>
+          <p id="profile-msg" style="text-align: center; margin-top: 10px; font-size: 0.9rem; color: var(--accent);">
+          </p>
         </div>
       </section>
     </main>

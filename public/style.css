@@ -453,6 +453,57 @@ main {
     border: 1px dashed var(--border-color);
 }
 
+/* 3. 프로필 폼 스타일 (Phase 1) */
+.profile-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.form-group label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.form-group input,
+.form-group select {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 12px 15px;
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-family: inherit;
+    transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.form-group option {
+    background: var(--bg-dark);
+    color: var(--text-primary);
+}
+
+.unit-span {
+    position: absolute;
+    right: 15px;
+    top: 36px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
 @keyframes fadeIn {
     from {
         opacity: 0;
