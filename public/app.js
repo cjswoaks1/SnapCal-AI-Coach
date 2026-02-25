@@ -189,8 +189,12 @@ analyzeBtn.addEventListener('click', async () => {
         ]);
 
         let responseText = result.response.text();
-        // 혹시 모를 마크다운 백틱 치환
-        responseText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+        // 앞뒤 불필요한 텍스트를 무시하고 실제 JSON 객체 부분만 추출
+        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+            responseText = jsonMatch[0];
+        }
+
         const scanResult = JSON.parse(responseText);
 
         currentScanData = scanResult;
@@ -235,8 +239,8 @@ analyzeBtn.addEventListener('click', async () => {
         }, 100);
 
     } catch (error) {
-        console.error("Vision AI Error:", error);
-        alert("이미지 분석 중 에러가 발생했습니다. (API 키 오류 또는 일시적 서버 장애)");
+        console.error("Vision AI Error 상세보기:", error);
+        alert(`이미지 분석 중 에러가 발생했습니다.\n\n[상세 에러 내용]\n${error.message}\n\n※ API 키 설정 오류, 이미지 용량 초과 또는 구글 서버 지연일 수 있습니다.`);
     } finally {
         analyzeBtn.disabled = false;
         analyzeBtn.textContent = "다시 사진 고르기";
