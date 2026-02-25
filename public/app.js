@@ -175,7 +175,7 @@ analyzeBtn.addEventListener('click', async () => {
     analyzeBtn.textContent = "AI가 사진을 보고 분석 중입니다... ⏳";
 
     try {
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
         const prompt = `이 음식 사진을 분석해줘. 사진에 있는 주요 음식들을 모두 인식하고, 그 음식들의 1인분 총합 기준으로 대략적인 섭취 칼로리(kcal), 단백질(g), 탄수화물(g), 지방(g)을 추정해줘. 음식이름은 한국어로 써줘. 반드시 아래 JSON 형식으로만 대답하고 마크다운 문법(\`\`\`)은 쓰지마.
 {
   "calories": 500,
