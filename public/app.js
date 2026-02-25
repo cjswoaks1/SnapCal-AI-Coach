@@ -176,13 +176,18 @@ analyzeBtn.addEventListener('click', async () => {
 
     try {
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-        const prompt = `이 음식 사진을 분석해줘. 사진에 있는 주요 음식들을 모두 인식하고, 그 음식들의 1인분 총합 기준으로 대략적인 섭취 칼로리(kcal), 단백질(g), 탄수화물(g), 지방(g)을 추정해줘. 음식이름은 한국어로 써줘. 반드시 아래 JSON 형식으로만 대답하고 마크다운 문법(\`\`\`)은 쓰지마.
+        const prompt = `이 음식 사진을 분석해줘. 사진에 있는 주요 음식들을 모두 인식하고, 그 음식들의 1인분 총합 기준으로 대략적인 섭취 칼로리(kcal), 단백질(g), 탄수화물(g), 지방(g)을 추정해줘. 음식이름은 한국어로 써줘. 
+추가로, 사진 속에서 각 식단 항목이 실제로 놓여 있는 대략적인 중심점 좌표(y, x)를 0~100 사이의 퍼센트(%) 값으로 예측해줘. (맨 위쪽 끝이 y=0, 맨 왼쪽 끝이 x=0 이야)
+반드시 아래 JSON 형식으로만 대답하고 마크다운 문법(\`\`\`)은 쓰지마.
 {
   "calories": 500,
   "protein": 35,
   "carbs": 40,
   "fat": 15,
-  "items": ["음식 1", "음식 2"]
+  "items": [
+    { "name": "제육볶음", "y": 65, "x": 70 },
+    { "name": "된장찌개", "y": 45, "x": 30 }
+  ]
 }`;
 
         const result = await model.generateContent([
@@ -203,15 +208,24 @@ analyzeBtn.addEventListener('click', async () => {
 
         analyzeBtn.textContent = "AI 분석 완료!";
 
-        // AI가 찾아낸 아이템 개수에 맞게 사진 위에 마커표시!
+        // AI가 찾아낸 아이템 개수에 맞게 사진 위에 위치 기반(X,Y) 마커표시!
         aiMarkers.innerHTML = '';
         if (scanResult.items && scanResult.items.length > 0) {
-            scanResult.items.forEach((item, index) => {
+            scanResult.items.forEach((item) => {
                 const marker = document.createElement('div');
                 marker.className = 'marker';
-                marker.style.top = (40 + (index * 15)) + '%';
-                marker.style.left = (30 + (index % 2 === 0 ? -10 : 20)) + '%';
-                marker.textContent = item;
+
+                // AI 좌표 기반 설정 (구형 데이터 대비 호환성 유지)
+                let topPos = 50, leftPos = 50, itemName = item;
+                if (typeof item === 'object') {
+                    topPos = typeof item.y === 'number' ? item.y : 50;
+                    leftPos = typeof item.x === 'number' ? item.x : 50;
+                    itemName = item.name;
+                }
+
+                marker.style.top = topPos + '%';
+                marker.style.left = leftPos + '%';
+                marker.textContent = itemName;
                 aiMarkers.appendChild(marker);
             });
         }
@@ -331,9 +345,19 @@ async function loadMonthlyHistory() {
                 const dateObj = data.timestamp ? data.timestamp.toDate() : new Date();
                 const dateString = `${dateObj.getMonth() + 1}월 ${dateObj.getDate()}일 ${dateObj.getHours()}:${String(dateObj.getMinutes()).padStart(2, '0')}`;
 
+                // 구형(문자열 배열)과 신형(객체 배열) 식단 데이터 포맷 호환성 처리
+                let itemNames = '알 수 없는 식단';
+                if (data.items && data.items.length > 0) {
+                    if (typeof data.items[0] === 'string') {
+                        itemNames = data.items.join(', ');
+                    } else {
+                        itemNames = data.items.map(i => i.name).join(', ');
+                    }
+                }
+
                 li.innerHTML = `
                     <div class="meal-info">
-                        <strong>🍴 ${data.items ? data.items.join(', ') : '알 수 없는 식단'}</strong>
+                        <strong>🍴 ${itemNames}</strong>
                         <span class="meal-date">${dateString}</span>
                     </div>
                     <div class="meal-cal">
