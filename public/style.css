@@ -1,0 +1,478 @@
+/* 기본 설정 및 폰트 */
+:root {
+    --bg-dark: #0a0a0c;
+    --card-bg: rgba(255, 255, 255, 0.05);
+    --border-color: rgba(255, 255, 255, 0.1);
+    --text-primary: #ffffff;
+    --text-secondary: #a0a0b0;
+    --accent: #4725f4;
+    --accent-hover: #3216ba;
+    --gradient-premium: linear-gradient(135deg, #4725f4, #d4af37);
+    --protein: #ff4757;
+    --carbs: #2ed573;
+    --fat: #ffa502;
+    --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Space Grotesk', 'Pretendard Variable', -apple-system, sans-serif;
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    line-height: 1.6;
+    overflow-x: hidden;
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* 레이아웃 */
+#app-container {
+    max-width: 480px;
+    /* 모바일 앱 비율 유지 */
+    margin: 0 auto;
+    min-height: 100vh;
+    border-left: 1px solid var(--border-color);
+    border-right: 1px solid var(--border-color);
+    background-color: var(--bg-dark);
+    position: relative;
+    padding-bottom: 80px;
+}
+
+/* 헤더 & 네비게이션 */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border-color);
+    background: rgba(10, 10, 12, 0.8);
+    backdrop-filter: blur(10px);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+.logo span {
+    color: var(--accent);
+}
+
+.nav-btn {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+}
+
+.nav-btn.outline {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+}
+
+.nav-btn:hover {
+    background: var(--accent-hover);
+}
+
+/* 탭 전환 버튼 */
+.tabs {
+    display: flex;
+    padding: 10px 24px;
+    gap: 10px;
+    border-bottom: 1px solid var(--border-color);
+    overflow-x: auto;
+}
+
+.tab-btn {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-family: inherit;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s;
+    white-space: nowrap;
+}
+
+.tab-btn.active {
+    background: var(--text-primary);
+    color: var(--bg-dark);
+    border-color: var(--text-primary);
+}
+
+main {
+    padding: 24px;
+}
+
+.view-section {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+/* 1. 스캐너 뷰 */
+.camera-container {
+    background: #111;
+    border-radius: 24px;
+    overflow: hidden;
+    position: relative;
+    aspect-ratio: 4 / 5;
+    border: 2px solid var(--border-color);
+    box-shadow: var(--shadow);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.camera-frame {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--text-secondary);
+    flex-direction: column;
+}
+
+#camera-overlay {
+    text-align: center;
+}
+
+#food-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 24px;
+}
+
+/* 카메라 UI 가이드 및 마커 */
+#ai-markers {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.marker {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.9);
+    color: #000;
+    padding: 6px 12px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    transform: translate(-50%, -50%);
+    animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.marker::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 6px 6px 0;
+    border-style: solid;
+    border-color: rgba(255, 255, 255, 0.9) transparent transparent transparent;
+}
+
+.upload-btn {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 50px;
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    margin-top: 15px;
+    font-weight: 600;
+    transition: 0.2s;
+}
+
+.upload-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.primary-btn {
+    width: 100%;
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 16px;
+    border-radius: 16px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    transition: 0.3s;
+    margin-bottom: 24px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.primary-btn:disabled {
+    background: #333;
+    color: #666;
+    cursor: not-allowed;
+}
+
+.secondary-btn {
+    width: 100%;
+    background: transparent;
+    color: white;
+    border: 1px solid var(--border-color);
+    padding: 12px;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    margin-top: 20px;
+    transition: 0.2s;
+}
+
+.secondary-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* 유리 질감 (Glassmorphism) 카드 */
+.glass-card {
+    background: var(--card-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 24px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow);
+}
+
+#result-card h3 {
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.total-calories {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 24px;
+}
+
+.total-calories span {
+    color: var(--accent);
+}
+
+.macro-item {
+    margin-bottom: 15px;
+}
+
+.macro-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    margin-bottom: 6px;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.protein-fill {
+    background: var(--protein);
+}
+
+.carbs-fill {
+    background: var(--carbs);
+}
+
+.fat-fill {
+    background: var(--fat);
+}
+
+/* AI 코칭 박스 */
+.coaching-box {
+    margin-top: 20px;
+    padding: 16px;
+    background: rgba(71, 37, 244, 0.1);
+    border: 1px solid rgba(71, 37, 244, 0.3);
+    border-radius: 12px;
+}
+
+.coaching-box h4 {
+    color: var(--accent);
+    margin-bottom: 8px;
+    font-size: 1rem;
+}
+
+.coaching-box p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+/* 프리미엄 배너 */
+.premium-banner {
+    background: var(--gradient-premium);
+    border-radius: 20px;
+    padding: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    margin-top: 30px;
+}
+
+.banner-content h4 {
+    font-size: 1.2rem;
+    margin-bottom: 4px;
+    color: #fff;
+}
+
+.banner-content p {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.8);
+    max-width: 60%;
+}
+
+.upgrade-btn {
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    backdrop-filter: blur(5px);
+}
+
+/* 2. 월간 식단 기록 뷰 (대표님 아이디어) */
+.history-header h2 {
+    font-size: 1.8rem;
+    margin-bottom: 5px;
+}
+
+.history-header p {
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+}
+
+.monthly-summary {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.summary-circle {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--accent) 0%, transparent 80%);
+    border: 4px solid var(--accent);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 0 20px rgba(71, 37, 244, 0.4);
+}
+
+.summary-circle span:first-child {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.summary-circle .unit {
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+.meal-list {
+    list-style: none;
+    margin-top: 15px;
+}
+
+.meal-list li {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 4px solid var(--accent);
+}
+
+.meal-info strong {
+    display: block;
+    font-size: 1.1rem;
+}
+
+.meal-date {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 30px;
+    color: var(--text-secondary);
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 12px;
+    border: 1px dashed var(--border-color);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes popIn {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -40%) scale(0.8);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}

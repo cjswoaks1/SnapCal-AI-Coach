@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SnapCal - AI 자동 칼로리 계산기</title>
+  <!-- 고급스러운 폰트 적용 (Space Grotesk, Pretendard) -->
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" as="style" crossorigin
+    href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/variable/pretendardvariable.css" />
+  <link rel="stylesheet" href="style.css">
+  <!-- Firebase SDK 로드 -->
+  <script type="module" src="app.js" defer></script>
+</head>
+
+<body>
+  <div id="app-container">
+    <!-- 네비게이션 및 헤더 -->
+    <header>
+      <div class="logo">SnapCal <span>AI</span></div>
+      <div id="auth-section">
+        <button id="login-btn" class="nav-btn">로그인</button>
+        <div id="user-profile" class="hidden">
+          <span id="user-name"></span>
+          <button id="logout-btn" class="nav-btn outline">로그아웃</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 탭 네비게이션 -->
+    <nav class="tabs">
+      <button class="tab-btn active" data-target="scanner-view">AI 스캐너</button>
+      <button class="tab-btn" data-target="history-view">식단 기록 (월간)</button>
+    </nav>
+
+    <main>
+      <!-- 1. AI 스캐너 뷰 -->
+      <section id="scanner-view" class="view-section active">
+        <div class="camera-container">
+          <div class="camera-frame">
+            <!-- 데모용 카메라 뷰 (이미지 업로드로 대체) -->
+            <div id="camera-overlay">
+              <p>오늘의 식단을 촬영하거나 업로드하세요</p>
+              <input type="file" id="food-image-input" accept="image/*" hidden>
+              <label for="food-image-input" class="upload-btn">📸 사진 선택 / 촬영</label>
+            </div>
+            <img id="food-preview" src="" alt="음식 사진 미리보기" class="hidden">
+
+            <!-- AI 인식 마커 (UI 연출용) -->
+            <div id="ai-markers" class="hidden">
+              <div class="marker" style="top:50%; left:20%;">톳나물무침 (45kcal)</div>
+              <div class="marker" style="top:60%; left:60%;">구운 김 (20kcal)</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="action-area">
+          <button id="analyze-btn" class="primary-btn" disabled>AI 분석 시작하기</button>
+        </div>
+
+        <!-- 분석 결과 카드 -->
+        <div id="result-card" class="glass-card hidden">
+          <h3>오늘의 한 끼 분석 완료 ✨</h3>
+          <div class="total-calories">
+            <span id="calc-calories">0</span> kcal
+          </div>
+
+          <div class="macro-bars">
+            <!-- 기존 매크로 바 유지 ... -->
+            <div class="macro-item">
+              <div class="macro-header">
+                <span>Protein (단백질)</span>
+                <span id="val-protein">0g</span>
+              </div>
+              <div class="progress-bar">
+                <div class="fill protein-fill" style="width: 0%;"></div>
+              </div>
+            </div>
+            <div class="macro-item">
+              <div class="macro-header">
+                <span>Carbs (탄수화물)</span>
+                <span id="val-carbs">0g</span>
+              </div>
+              <div class="progress-bar">
+                <div class="fill carbs-fill" style="width: 0%;"></div>
+              </div>
+            </div>
+            <div class="macro-item">
+              <div class="macro-header">
+                <span>Fat (지방)</span>
+                <span id="val-fat">0g</span>
+              </div>
+              <div class="progress-bar">
+                <div class="fill fat-fill" style="width: 0%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 🔥 안티그래비티(NotebookLM 연동) AI 코칭 영역 추가 -->
+          <div id="ai-coaching-box" class="coaching-box hidden">
+            <h4>🧠 SnapCal AI 영양 코치</h4>
+            <p id="ai-coaching-message">분석 중입니다...</p>
+          </div>
+
+          <button id="save-meal-btn" class="secondary-btn">이 식단 기록에 저장하기</button>
+        </div>
+
+        <!-- 프리미엄 구독 배너 (수익 모델) -->
+        <div class="premium-banner">
+          <div class="banner-content">
+            <h4>Unlock Premium Reports 👑</h4>
+            <p>맞춤형 다이어트 코칭과 완벽한 식단 리포트를 받아보세요.</p>
+          </div>
+          <button class="upgrade-btn">Go Premium</button>
+        </div>
+      </section>
+
+      <!-- 2. 월간 식단 기록 뷰 (대표님 아이디어) -->
+      <section id="history-view" class="view-section hidden">
+        <div class="history-header">
+          <h2>이번 달 누적 섭취량</h2>
+          <p>매일 기록하고 눈으로 변화를 확인하세요.</p>
+        </div>
+
+        <div class="monthly-summary glass-card">
+          <div class="summary-circle">
+            <span id="monthly-total-calories">0</span>
+            <span class="unit">kcal</span>
+          </div>
+          <div class="summary-details">
+            <p>이번 달 총 <strong><span id="meal-count">0</span></strong>끼의 식단을 기록했습니다.</p>
+          </div>
+        </div>
+
+        <div class="daily-list-container">
+          <h3>최근 기록된 식단</h3>
+          <ul id="meal-history-list" class="meal-list">
+            <!-- JS로 데이터 삽입됨 -->
+            <p class="empty-state">아직 기록된 식단이 없습니다. 스캐너에서 사진을 찍어 기록을 남겨보세요!</p>
+          </ul>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+
+</html>
