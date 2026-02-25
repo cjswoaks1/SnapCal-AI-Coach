@@ -453,6 +453,36 @@ main {
     border: 1px dashed var(--border-color);
 }
 
+/* Phase 2: 대시보드 차트 스타일 */
+.dashboard-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 24px;
+}
+
+.chart-card {
+    padding: 20px;
+    margin-bottom: 0;
+}
+
+.chart-card h3 {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.canvas-container {
+    position: relative;
+    width: 100%;
+    /* 도넛은 정사각형에 가깝게, 바차트는 약간 넓게 */
+    height: 200px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
 /* 3. 프로필 폼 스타일 (Phase 1) */
 .profile-form {
     display: flex;

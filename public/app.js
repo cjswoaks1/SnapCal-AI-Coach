@@ -64,6 +64,10 @@ const profGoal = document.getElementById('prof-goal');
 const saveProfileBtn = document.getElementById('save-profile-btn');
 const profileMsg = document.getElementById('profile-msg');
 
+// 전역 차트 객체 저장용 (재그리기 위해 필요)
+let macroChartInstance = null;
+let dailyChartInstance = null;
+
 // --- 안티그래비티 기반(NotebookLM) AI 코칭 로직 (초개인화 프로필 기반) ---
 function generateCoachingMessage(data) {
     const totalMacros = data.protein + data.carbs + data.fat;
@@ -411,6 +415,27 @@ async function loadMonthlyHistory() {
         document.getElementById('monthly-total-calories').textContent = totalCalories;
         document.getElementById('meal-count').textContent = mealCount;
 
+        // 🔥 Phase 2: 차트를 그리기 위한 데이터 집계
+        let totalProtein = 0, totalCarbs = 0, totalFat = 0;
+        let dailyCaloriesMap = {}; // 일별 칼로리 누적용 객체 { "1": 500, "2": 1200, ... }
+
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            totalProtein += data.protein || 0;
+            totalCarbs += data.carbs || 0;
+            totalFat += data.fat || 0;
+
+            if (data.timestamp) {
+                const dateObj = data.timestamp.toDate();
+                const day = dateObj.getDate(); // 며칠인지 추출
+                if (!dailyCaloriesMap[day]) dailyCaloriesMap[day] = 0;
+                dailyCaloriesMap[day] += data.calories || 0;
+            }
+        });
+
+        // 차트 컴포넌트 렌더링 호출
+        renderDashboardCharts(totalProtein, totalCarbs, totalFat, dailyCaloriesMap);
+
     } catch (error) {
         console.error("Error loading history:", error);
         mealHistoryList.innerHTML = '<p class="empty-state" style="color:red;">데이터를 불러오는 중 에러가 발생했습니다. (DB 권한 확인 필요)</p>';
@@ -475,3 +500,90 @@ if (saveProfileBtn) {
         }
     });
 }
+
+// 🔥 Phase 2 : 시각화 대시보드 (Chart.js 연동)
+function renderDashboardCharts(protein, carbs, fat, dailyDataMap) {
+    Chart.defaults.color = 'rgba(255, 255, 255, 0.7)';
+    Chart.defaults.font.family = "'Pretendard Variable', sans-serif";
+
+    // 1. 매크로 링 차트 (도넛)
+    const ctxMacro = document.getElementById('macro-donut-chart').getContext('2d');
+    if (macroChartInstance) macroChartInstance.destroy(); // 기존 차트 초기화
+
+    macroChartInstance = new Chart(ctxMacro, {
+        type: 'doughnut',
+        data: {
+            labels: ['단백질', '탄수화물', '지방'],
+            datasets: [{
+                data: [protein, carbs, fat],
+                backgroundColor: ['#ff4757', '#2ed573', '#ffa502'],
+                borderWidth: 0,
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '75%',
+            plugins: {
+                legend: { position: 'bottom', labels: { padding: 20 } }
+            }
+        }
+    });
+
+    // 2. 일자별 바 차트
+    const ctxDaily = document.getElementById('daily-bar-chart').getContext('2d');
+    if (dailyChartInstance) dailyChartInstance.destroy();
+
+    // 현재 달의 일 수만큼 배열 생성
+    const today = new Date();
+    const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+    const labels = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+    const dataPoints = labels.map(day => dailyDataMap[day] || 0);
+
+    // 일일 목표 칼로리 설정 (프로필 기반, 없으면 기본 2000)
+    let dailyTarget = 2000;
+
+    // 남자 기초대사량 1800, 여자 1400 수준 잡고 목표별 가감
+    if (userProfileData && userProfileData.targetWeight) {
+        let baseMaint = userProfileData.gender === 'male' ? 2200 : 1800;
+        if (userProfileData.goal === 'loss') dailyTarget = baseMaint - 500;
+        else if (userProfileData.goal === 'gain') dailyTarget = baseMaint + 500;
+        else dailyTarget = baseMaint;
+    }
+
+    // 상태 요약 메시지 업데이트
+    const msgEl = document.getElementById('calorie-status-msg');
+    const todayCal = dailyDataMap[today.getDate()] || 0;
+
+    if (todayCal > dailyTarget + 300) msgEl.innerHTML = `<span style="color:#ff4757;">오늘 권장량(${dailyTarget}kcal) 초과 위험입니다!</span>`;
+    else if (todayCal > 0) msgEl.innerHTML = `<span style="color:#2ed573;">안전권입니다. (목표: ${dailyTarget}kcal)</span>`;
+    else msgEl.innerHTML = "오늘의 기록을 추가해주세요.";
+
+
+    // 목표 초과 여부에 따라 막대 색상 변경
+    const barColors = dataPoints.map(cal => cal > dailyTarget ? '#ff4757' : '#4725f4');
+
+    dailyChartInstance = new Chart(ctxDaily, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: '섭취 칼로리',
+                data: dataPoints,
+                backgroundColor: barColors,
+                borderRadius: 4,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } }, // 바 차트는 범례 삭제
+            scales: {
+                y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+}
+
